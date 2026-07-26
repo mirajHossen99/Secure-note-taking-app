@@ -3,6 +3,7 @@ import {
   createUser,
   deleteUser,
   getUser,
+  groupUsersByInterest,
   listUsers,
   updateUser,
 } from "../controllers/userController.js";
@@ -13,10 +14,12 @@ const router = express.Router();
 
 router.use(requireAuth, requireRole("admin"));
 
+router.get('/grouped-by-interest', groupUsersByInterest);
 router.get("/", listUsers);
 router.get("/:id", getUser);
 router.post("/", createUser);
 router.patch("/:id", updateUser);
 router.delete("/:id", deleteUser);
+
 
 export default router;

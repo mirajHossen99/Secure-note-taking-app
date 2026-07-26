@@ -80,15 +80,15 @@ export const updateUser = asyncHandler(async (req, res) => {
   if (!user) {
     return res.status(404).json({
       success: false,
-      message: 'User not found',
+      message: "User not found",
     });
   }
 
   if (name !== undefined) user.name = name;
   if (Array.isArray(interests)) user.interests = interests;
-  
+
   if (role !== undefined) {
-    if (!['user', 'admin'].includes(role)) {
+    if (!["user", "admin"].includes(role)) {
       return res.status(400).json({
         success: false,
         message: 'Role must be "user" or "admin"',
@@ -128,5 +128,133 @@ export const deleteUser = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     message: "User deleted successfully",
+  });
+});
+
+// Get users grouped-by-interest - Admin only
+// Solution: 1 [ Best solution for DRY ]
+export const groupUsersByInterest = asyncHandler(async (req, res) => {
+  const { interest } = req.query;
+  const { page, limit, skip } = getPagination(req.query);
+
+  const interestArray = interest
+    ? (Array.isArray(interest) ? interest : interest.split(","))
+        .map((i) => String(i).toLowerCase().trim())
+        .filter(Boolean)
+    : [];
+
+  const matchStage = interestArray.length
+    ? [{ $match: { interests: { $in: interestArray } } }]
+    : [];
+
+  const pipeline = [
+    ...matchStage,
+    { $unwind: "$interests" },
+    ...matchStage, 
+    {
+      $group: {
+        _id: "$interests",
+        count: { $sum: 1 },
+        users: { $push: { _id: "$_id", name: "$name", email: "$email" } },
+      },
+    },
+    { $sort: { count: -1 } },
+    {
+      $project: {
+        _id: 0,
+        interest: "$_id",
+        count: 1,
+        users: { $slice: ["$users", 20] },
+      },
+    },
+    {
+      $facet: {
+        metadata: [{ $count: "total" }],
+        data: [{ $skip: skip }, { $limit: limit }],
+      },
+    },
+  ];
+
+  const [result] = await User.aggregate(pipeline, { allowDiskUse: true });
+  const total = result?.metadata?.[0]?.total || 0;
+  const groups = result?.data || [];
+
+  res.json({
+    success: true,
+    groups,
+    meta: buildMeta({ page, limit, total }),
+  });
+});
+
+// --------------------- Optional (only for checking) -------------------------
+// Get users grouped-by-interest - Admin only
+// Solution: 2
+export const groupUsersByInterest2 = asyncHandler(async (req, res) => {
+  const { interest } = req.query;
+  const { page, limit, skip } = getPagination(req.query);
+
+  let interestArray = [];
+
+  if (interest) {
+    if (typeof interest === "string") {
+      interestArray = interest
+        .split(",")
+        .map((i) => i.toLowerCase().trim())
+        .filter(Boolean);
+    } else if (Array.isArray(interest)) {
+      interestArray = interest
+        .map((i) => String(i).toLowerCase().trim())
+        .filter(Boolean);
+    }
+  }
+
+  const pipeline = [];
+
+  if (interestArray.length > 0) {
+    pipeline.push({ $match: { interests: { $in: interestArray } } });
+  }
+
+  pipeline.push({ $unwind: "$interests" });
+
+  if (interestArray.length > 0) {
+    pipeline.push({ $match: { interests: { $in: interestArray } } });
+  }
+
+  pipeline.push(
+    {
+      $group: {
+        _id: "$interests",
+        count: { $sum: 1 },
+        users: {
+          $push: { _id: "$_id", name: "$name", email: "$email" },
+        },
+      },
+    },
+    { $sort: { count: -1 } },
+    {
+      $project: {
+        _id: 0,
+        interest: "$_id",
+        count: 1,
+        users: { $slice: ["$users", 20] },
+      },
+    },
+    {
+      $facet: {
+        metadata: [{ $count: "total" }],
+        data: [{ $skip: skip }, { $limit: limit }],
+      },
+    }
+  );
+
+  const [result] = await User.aggregate(pipeline, { allowDiskUse: true });
+
+  const total = result?.metadata?.[0]?.total || 0;
+  const groups = result?.data || [];
+
+  res.json({
+    success: true,
+    groups,
+    meta: buildMeta({ page, limit, total }),
   });
 });
