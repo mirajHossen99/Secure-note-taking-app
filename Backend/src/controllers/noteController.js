@@ -1,5 +1,6 @@
 import Note from "../models/Note.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import { buildMeta, getPagination } from "../utils/pagination.js";
 
 // Create a new Note
 export const createNote = asyncHandler(async (req, res) => {
@@ -48,6 +49,31 @@ export const getNote = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     note,
+  });
+});
+
+// User:  returns only their own notes
+// Admin: returns everyone's notes
+export const listNotes = asyncHandler(async (req, res) => {
+  const { page, limit, skip } = getPagination(req.query);
+  const isAdmin = req.user.role === "admin";
+
+  const filter = isAdmin ? {} : { owner: req.user._id };
+
+  const [notes, total] = await Promise.all([
+    Note.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate("owner", "name email")
+      .lean(),
+    Note.countDocuments(filter),
+  ]);
+
+  res.json({
+    success: true,
+    notes,
+    meta: buildMeta({ page, limit, total }),
   });
 });
 
