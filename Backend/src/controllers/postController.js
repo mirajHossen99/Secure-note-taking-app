@@ -44,6 +44,8 @@ export const listPosts = asyncHandler(async (req, res) => {
   });
 });
 
+
+// Get posts for a specific user
 export const getPostsForUser = asyncHandler(async (req, res) => {
   const { userId } = req.params;
   const { page, limit, skip } = getPagination(req.query);
