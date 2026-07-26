@@ -15,12 +15,13 @@ export const getPagination = (
 };
 
 export const buildMeta = ({ page, limit, total }) => {
+  const safeLimit = Math.max(1, parseInt(limit, 10) || 1);
   const safeTotal = Math.max(0, parseInt(total, 10) || 0);
-  const totalPages = Math.ceil(safeTotal / limit) || 1;
+  const totalPages = Math.ceil(safeTotal / safeLimit) || 1;
 
   return {
     page,
-    limit,
+    limit: safeLimit,
     total: safeTotal,
     totalPages,
     hasNextPage: page < totalPages,
