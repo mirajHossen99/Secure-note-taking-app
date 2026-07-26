@@ -30,5 +30,12 @@ const noteSchema = new Schema(
 noteSchema.index({ owner: 1, createdAt: -1 });
 noteSchema.index({ createdAt: -1 });
 
+noteSchema.set("toJSON", {
+  transform: (_doc, ret) => {
+    delete ret.__v;
+    return ret;
+  },
+});
+
 const Note = mongoose.model("Note", noteSchema);
 export default Note;
