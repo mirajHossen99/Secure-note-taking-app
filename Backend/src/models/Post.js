@@ -1,21 +1,22 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
 const postSchema = new Schema(
   {
     title: {
       type: String,
-      required: true,
+      required: [true, 'Title is required'],
       trim: true,
     },
     content: {
       type: String,
       default: '',
+      trim: true,
     },
     author: {
       type: Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      required: [true, 'Author is required'],
     },
   },
   { timestamps: true }
@@ -23,4 +24,5 @@ const postSchema = new Schema(
 
 postSchema.index({ author: 1, createdAt: -1 });
 
-module.exports = mongoose.model('Post', postSchema);
+const Post = mongoose.model('Post', postSchema);
+export default Post;
