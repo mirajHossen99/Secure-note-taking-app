@@ -1,25 +1,26 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
-
+import mongoose from 'mongoose';
 const { Schema } = mongoose;
+import bcrypt from 'bcryptjs';
+
 
 const userSchema = new Schema(
   {
     name: {
       type: String,
-      required: true,
+      required: [true, 'Name is required'],
       trim: true,
     },
     email: {
       type: String,
-      required: true,
+      required: [true, 'Email is required'],
+      unique: true,
       lowercase: true,
       trim: true,
     },
     password: {
       type: String,
-      required: true,
-      minlength: 6,
+      required: [true, 'Password is required'],
+      minlength: [6, 'Password must be at least 6 characters'],
       select: false,
     },
     role: {
@@ -41,7 +42,7 @@ userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ interests: 1 });
 userSchema.index({ createdAt: -1 });
 
-// Hash the password when it is save
+// Password Hashing Middleware
 userSchema.pre('save', async function hashPassword(next) {
   if (!this.isModified('password')) return next();
   try {
@@ -54,8 +55,7 @@ userSchema.pre('save', async function hashPassword(next) {
   }
 });
 
-// Instance method used during login to check a plaintext password
-// against the stored hash.
+// To check password validity during login
 userSchema.methods.comparePassword = function comparePassword(candidate) {
   return bcrypt.compare(candidate, this.password);
 };
@@ -68,4 +68,5 @@ userSchema.set('toJSON', {
   },
 });
 
-module.exports = mongoose.model('User', userSchema);
+const User = mongoose.model('User', userSchema);
+export default User;
