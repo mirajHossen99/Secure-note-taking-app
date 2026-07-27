@@ -28,7 +28,7 @@ A high-performance, containerized RESTful API built with **Node.js**, **Express.
 ## Project Structure
 
 ```text
-.
+
 ├── src/
 │   ├── config/          # Database & environment configurations
 │   ├── controllers/     # Request handlers & route logic
