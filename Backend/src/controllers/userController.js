@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import User from "../models/User.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { buildMeta, getPagination } from "../utils/pagination.js";
@@ -56,6 +57,11 @@ export const createUser = asyncHandler(async (req, res) => {
 // Get user by id - Admin only
 export const getUser = asyncHandler(async (req, res) => {
   const userId = req.params.id;
+
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    return res.status(400).json({ success: false, message: "Invalid user id" });
+  }
+
   const user = await User.findById(userId);
 
   if (!user) {
@@ -75,6 +81,11 @@ export const getUser = asyncHandler(async (req, res) => {
 export const updateUser = asyncHandler(async (req, res) => {
   const { name, role, interests } = req.body;
   const userId = req.params.id;
+
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    return res.status(400).json({ success: false, message: "Invalid user id" });
+  }
+
   const user = await User.findById(userId);
 
   if (!user) {
@@ -107,7 +118,13 @@ export const updateUser = asyncHandler(async (req, res) => {
 
 // Delete user by id - Admin only
 export const deleteUser = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.params.id);
+  const userId = req.params.id;
+
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    return res.status(400).json({ success: false, message: "Invalid user id" });
+  }
+
+  const user = await User.findById(userId);
 
   if (!user) {
     return res.status(404).json({
@@ -116,7 +133,9 @@ export const deleteUser = asyncHandler(async (req, res) => {
     });
   }
 
-  if (user._id.toString() === req.user._id.toString()) {
+  const isOwner = user._id.toString() === req.user._id.toString();
+  
+  if (isOwner) {
     return res.status(400).json({
       success: false,
       message: "You cannot delete your own admin account",
@@ -150,7 +169,7 @@ export const groupUsersByInterest = asyncHandler(async (req, res) => {
   const pipeline = [
     ...matchStage,
     { $unwind: "$interests" },
-    ...matchStage, 
+    ...matchStage,
     {
       $group: {
         _id: "$interests",
@@ -244,7 +263,7 @@ export const groupUsersByInterest2 = asyncHandler(async (req, res) => {
         metadata: [{ $count: "total" }],
         data: [{ $skip: skip }, { $limit: limit }],
       },
-    }
+    },
   );
 
   const [result] = await User.aggregate(pipeline, { allowDiskUse: true });
