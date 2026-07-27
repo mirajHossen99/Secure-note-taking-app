@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Note from "../models/Note.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { buildMeta, getPagination } from "../utils/pagination.js";
@@ -26,9 +27,14 @@ export const createNote = asyncHandler(async (req, res) => {
   });
 });
 
-// Get note by id — User: owner only | Admin: any note
+// Get note by id - Owner or Admin
 export const getNote = asyncHandler(async (req, res) => {
   const noteId = req.params.id;
+
+  if (!mongoose.Types.ObjectId.isValid(noteId)) {
+    return res.status(400).json({ success: false, message: "Invalid note id" });
+  }
+
   const note = await Note.findById(noteId).populate("owner", "name email");
 
   if (!note) {
@@ -39,7 +45,9 @@ export const getNote = asyncHandler(async (req, res) => {
   }
 
   const isOwner = note.owner._id.toString() === req.user._id.toString();
-  if (!isOwner && req.user.role !== "admin") {
+  const isAdmin = req.user.role === "admin";
+
+  if (!isOwner && !isAdmin) {
     return res.status(403).json({
       success: false,
       message: "You do not have access to this note",
@@ -77,9 +85,14 @@ export const listNotes = asyncHandler(async (req, res) => {
   });
 });
 
-// Update note — Owner or Admin
+// Update note - Owner or Admin
 export const updateNote = asyncHandler(async (req, res) => {
   const noteId = req.params.id;
+
+  if (!mongoose.Types.ObjectId.isValid(noteId)) {
+    return res.status(400).json({ success: false, message: "Invalid note id" });
+  }
+
   const note = await Note.findById(noteId);
 
   if (!note) {
@@ -90,10 +103,12 @@ export const updateNote = asyncHandler(async (req, res) => {
   }
 
   const isOwner = note.owner.toString() === req.user._id.toString();
-  if (!isOwner && req.user.role !== "admin") {
+  const isAdmin = req.user.role === "admin";
+  
+  if (!isOwner && !isAdmin) {
     return res.status(403).json({
       success: false,
-      message: "You do not have access to this note",
+      message: "You do not have permission to update this note",
     });
   }
 
@@ -120,9 +135,14 @@ export const updateNote = asyncHandler(async (req, res) => {
   });
 });
 
-// Delete note — Owner or Admin
+// Delete note - Owner or Admin
 export const deleteNote = asyncHandler(async (req, res) => {
   const noteId = req.params.id;
+
+  if (!mongoose.Types.ObjectId.isValid(noteId)) {
+    return res.status(400).json({ success: false, message: "Invalid note id" });
+  }
+
   const note = await Note.findById(noteId);
 
   if (!note) {
@@ -133,10 +153,12 @@ export const deleteNote = asyncHandler(async (req, res) => {
   }
 
   const isOwner = note.owner.toString() === req.user._id.toString();
-  if (!isOwner && req.user.role !== "admin") {
+  const isAdmin = req.user.role === "admin";
+
+  if (!isOwner && !isAdmin) {
     return res.status(403).json({
       success: false,
-      message: "You do not have access to this note",
+      message: "You do not have permission to delete this note",
     });
   }
 
