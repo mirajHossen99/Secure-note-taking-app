@@ -74,7 +74,7 @@ BCRYPT_SALT_ROUNDS = 10
 
 ## How to Run the Project
 
-### Option 1: Running with Docker Compose (Recommended)
+### Running with Docker Compose (Recommended)
 
 1. **Clone the repository:**
 ```bash
@@ -109,7 +109,7 @@ The API will be available at `http://localhost:5000`.
 
 ---
 
-### Option 2: Running Locally (Without Docker App Container)
+### Running Locally
 
 1. **Install dependencies:**
 ```bash
@@ -239,11 +239,5 @@ docker-compose down
 * **Purge Containers & Database Volumes:**
 ```bash
 docker-compose down -v
-
-```
-
-
-
-```
 
 ```
