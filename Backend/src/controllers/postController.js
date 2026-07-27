@@ -44,8 +44,39 @@ export const listPosts = asyncHandler(async (req, res) => {
   });
 });
 
+// Delete a post by ID - Owner or Admin
+export const deletePost = asyncHandler(async (req, res) => {
+  const postId = req.params.id;
 
-// Get posts for a specific user
+  if (!mongoose.Types.ObjectId.isValid(postId)) {
+    return res.status(400).json({ success: false, message: "Invalid post id" });
+  }
+
+  const post = await Post.findById(postId);
+
+  if (!post) {
+    return res.status(404).json({ success: false, message: "Post not found" });
+  }
+
+  const isAuthor = post.author.toString() === req.user._id.toString();
+  const isAdmin = req.user.role === "admin";
+
+  if (!isAuthor && !isAdmin) {
+    return res.status(403).json({
+      success: false,
+      message: "You do not have permission to delete this post",
+    });
+  }
+
+  await post.deleteOne();
+
+  res.json({
+    success: true,
+    message: "Post deleted successfully",
+  });
+});
+
+// Get posts for a specific user by user id
 export const getPostsForUser = asyncHandler(async (req, res) => {
   const { userId } = req.params;
   const { page, limit, skip } = getPagination(req.query);
