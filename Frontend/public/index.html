@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Secure Notes</title>
+  <style>
+    body { font-family: sans-serif; max-width: 820px; margin: 20px auto; padding: 0 12px; }
+    section { border: 1px solid #ccc; padding: 12px; margin-bottom: 16px; }
+    input, textarea { display: block; width: 100%; margin: 4px 0 8px; padding: 6px; box-sizing: border-box; }
+    button { margin: 2px 6px 2px 0; padding: 6px 12px; cursor: pointer; }
+    .row { border-bottom: 1px solid #eee; padding: 8px 0; }
+    .hidden { display: none; }
+    .error { color: #b00020; }
+    .muted { color: #666; font-size: 0.9em; }
+    h1 { font-size: 1.35em; }
+    h2 { font-size: 1.1em; margin-top: 0; }
+  </style>
+</head>
+<body>
+  <h1>Secure Notes</h1>
+  <p id="whoami" class="muted"></p>
+
+  <section id="authSection">
+    <h2>Login</h2>
+    <input id="loginEmail" type="email" placeholder="email" value="admin@example.com" />
+    <input id="loginPassword" type="password" placeholder="password" value="ChangeMe123!" />
+    <button id="loginBtn" type="button">Login</button>
+    <div id="loginError" class="error"></div>
+
+    <h2>Register</h2>
+    <input id="regName" placeholder="name" />
+    <input id="regEmail" type="email" placeholder="email" />
+    <input id="regPassword" type="password" placeholder="password (min 8 chars)" />
+    <input id="regInterests" placeholder="interests, comma separated (e.g. chess, reading)" />
+    <button id="regBtn" type="button">Register</button>
+    <div id="regError" class="error"></div>
+  </section>
+
+  <section id="appSection" class="hidden">
+    <button id="logoutBtn" type="button">Logout</button>
+
+    <h2>New Note</h2>
+    <input id="noteTitle" placeholder="title" />
+    <textarea id="noteContent" rows="3" placeholder="content"></textarea>
+    <button id="createNoteBtn" type="button">Add Note</button>
+
+    <h2>Notes <span id="noteScope" class="muted"></span></h2>
+    <div id="notesList"></div>
+    <div id="notesPager"></div>
+
+    <h2>New Post (visible to everyone)</h2>
+    <input id="postTitle" placeholder="title" />
+    <textarea id="postContent" rows="3" placeholder="content"></textarea>
+    <button id="createPostBtn" type="button">Add Post</button>
+
+    <h2>All Posts</h2>
+    <div id="postsList"></div>
+    <div id="postsPager"></div>
+
+    <h2>Lookup posts for a user (Aggregation Scenario 2)</h2>
+    <input id="lookupUserId" placeholder="user id" />
+    <button id="lookupBtn" type="button">Load Posts via $lookup</button>
+    <div id="lookupResult"></div>
+
+    <div id="adminSection" class="hidden">
+      <h2>Admin: Manage Users</h2>
+      <div id="usersList"></div>
+      <div id="usersPager"></div>
+
+      <h2>Admin: Create User</h2>
+      <input id="newUserName" placeholder="name" />
+      <input id="newUserEmail" type="email" placeholder="email" />
+      <input id="newUserPassword" type="password" placeholder="password" />
+      <input id="newUserInterests" placeholder="interests (comma separated)" />
+      <label><input id="newUserAdmin" type="checkbox" /> admin role</label>
+      <button id="createUserBtn" type="button">Create User</button>
+      <div id="createUserError" class="error"></div>
+
+      <h2>Admin: Users Grouped by Interest (Aggregation Scenario 1)</h2>
+      <input id="interestFilter" placeholder="optional filter, e.g. chess" />
+      <button id="groupBtn" type="button">Load Groups</button>
+      <div id="groupsList"></div>
+    </div>
+  </section>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
