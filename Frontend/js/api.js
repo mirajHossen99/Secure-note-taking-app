@@ -87,8 +87,29 @@ export const API = {
     });
   },
 
-  async listNotes({ page = 1, limit = 10, userId } = {}) {
-    const qs = new URLSearchParams({ page, limit, ...(userId && { userId }) });
+  /**
+   * Supports both signature styles:
+   * 1. API.listNotes(currentPage, NOTES_PER_PAGE)
+   * 2. API.listNotes({ page: 2, limit: 10, userId: '...' })
+   */
+  async listNotes(pageOrOptions = 1, limitArg = 10) {
+    let page = 1;
+    let limit = 10;
+    let userId;
+
+    if (typeof pageOrOptions === 'object' && pageOrOptions !== null) {
+      page = pageOrOptions.page || 1;
+      limit = pageOrOptions.limit || 10;
+      userId = pageOrOptions.userId;
+    } else {
+      page = pageOrOptions || 1;
+      limit = limitArg || 10;
+    }
+
+    const queryObj = { page, limit };
+    if (userId) queryObj.userId = userId;
+
+    const qs = new URLSearchParams(queryObj);
     return request(`/notes?${qs}`);
   },
 
@@ -108,12 +129,34 @@ export const API = {
   },
 
   // ---------------- POSTS ----------------
-  async listPosts({ page = 1, limit = 10 } = {}) {
+  async listPosts(pageOrOptions = 1, limitArg = 10) {
+    let page = 1;
+    let limit = 10;
+
+    if (typeof pageOrOptions === 'object' && pageOrOptions !== null) {
+      page = pageOrOptions.page || 1;
+      limit = pageOrOptions.limit || 10;
+    } else {
+      page = pageOrOptions || 1;
+      limit = limitArg || 10;
+    }
+
     const qs = new URLSearchParams({ page, limit });
     return request(`/posts?${qs}`);
   },
 
-  async getPostsForUser(userId, { page = 1, limit = 10 } = {}) {
+  async getPostsForUser(userId, pageOrOptions = 1, limitArg = 10) {
+    let page = 1;
+    let limit = 10;
+
+    if (typeof pageOrOptions === 'object' && pageOrOptions !== null) {
+      page = pageOrOptions.page || 1;
+      limit = pageOrOptions.limit || 10;
+    } else {
+      page = pageOrOptions || 1;
+      limit = limitArg || 10;
+    }
+
     const qs = new URLSearchParams({ page, limit });
     return request(`/posts/user/${userId}?${qs}`);
   },
@@ -130,7 +173,11 @@ export const API = {
   },
 
   // ---------------- USERS (admin) ----------------
-  async groupUsersByInterest({ interest, page = 1, limit = 10 } = {}) {
+  async groupUsersByInterest(options = {}) {
+    const page = options.page || 1;
+    const limit = options.limit || 10;
+    const interest = options.interest;
+
     const qs = new URLSearchParams({
       page,
       limit,
@@ -139,7 +186,18 @@ export const API = {
     return request(`/users/grouped-by-interest?${qs}`);
   },
 
-  async listUsers({ page = 1, limit = 10 } = {}) {
+  async listUsers(pageOrOptions = 1, limitArg = 10) {
+    let page = 1;
+    let limit = 10;
+
+    if (typeof pageOrOptions === 'object' && pageOrOptions !== null) {
+      page = pageOrOptions.page || 1;
+      limit = pageOrOptions.limit || 10;
+    } else {
+      page = pageOrOptions || 1;
+      limit = limitArg || 10;
+    }
+
     const qs = new URLSearchParams({ page, limit });
     return request(`/users?${qs}`);
   },
