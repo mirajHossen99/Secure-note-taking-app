@@ -102,7 +102,7 @@ Ensure the backend server is running before interacting with dynamic features (N
 
 ```javascript
 // frontend/js/api.js
-const BASE_URL = 'http://localhost:5000/api'; // Change to match your server endpoint
+const BASE_URL = 'http://localhost:5000/api';
 
 ```
 
@@ -116,9 +116,3 @@ const BASE_URL = 'http://localhost:5000/api'; // Change to match your server end
 * **Admin Dashboard**:
 * User list management with role assignment.
 * Grouping and searching users by specific interests with custom pagination.
-
-
-
-```
-
-```
