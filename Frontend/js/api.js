@@ -25,6 +25,7 @@ async function request(endpoint, options = {}) {
     if (!response.ok) {
       if (response.status === 401) {
         localStorage.removeItem("token");
+        localStorage.removeItem("user");
       }
       return {
         success: false,
@@ -35,7 +36,7 @@ async function request(endpoint, options = {}) {
 
     return {
       success: true,
-      data: body.data || body,
+      data: body.data !== undefined ? body.data : body,
       meta: body.meta || null,
     };
   } catch (error) {
@@ -55,6 +56,9 @@ export const API = {
     });
     if (res.success && res.data?.token) {
       localStorage.setItem("token", res.data.token);
+      if (res.data.user) {
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+      }
     }
     return res;
   },
@@ -65,14 +69,20 @@ export const API = {
       body: JSON.stringify(credentials),
     });
     const token = res.data?.token || res.data?.accessToken;
+    const user = res.data?.user;
+
     if (res.success && token) {
       localStorage.setItem("token", token);
+      if (user) {
+        localStorage.setItem("user", JSON.stringify(user));
+      }
     }
     return res;
   },
 
   logout() {
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
   },
 
   async getProfile() {
@@ -87,11 +97,6 @@ export const API = {
     });
   },
 
-  /**
-   * Supports both signature styles:
-   * 1. API.listNotes(currentPage, NOTES_PER_PAGE)
-   * 2. API.listNotes({ page: 2, limit: 10, userId: '...' })
-   */
   async listNotes(pageOrOptions = 1, limitArg = 10) {
     let page = 1;
     let limit = 10;
@@ -106,8 +111,8 @@ export const API = {
       limit = limitArg || 10;
     }
 
-    const queryObj = { page, limit };
-    if (userId) queryObj.userId = userId;
+    const queryObj = { page: String(page), limit: String(limit) };
+    if (userId) queryObj.userId = String(userId);
 
     const qs = new URLSearchParams(queryObj);
     return request(`/notes?${qs}`);
@@ -141,7 +146,7 @@ export const API = {
       limit = limitArg || 10;
     }
 
-    const qs = new URLSearchParams({ page, limit });
+    const qs = new URLSearchParams({ page: String(page), limit: String(limit) });
     return request(`/posts?${qs}`);
   },
 
@@ -157,7 +162,7 @@ export const API = {
       limit = limitArg || 10;
     }
 
-    const qs = new URLSearchParams({ page, limit });
+    const qs = new URLSearchParams({ page: String(page), limit: String(limit) });
     return request(`/posts/user/${userId}?${qs}`);
   },
 
@@ -178,11 +183,10 @@ export const API = {
     const limit = options.limit || 10;
     const interest = options.interest;
 
-    const qs = new URLSearchParams({
-      page,
-      limit,
-      ...(interest && { interest }),
-    });
+    const queryObj = { page: String(page), limit: String(limit) };
+    if (interest) queryObj.interest = String(interest);
+
+    const qs = new URLSearchParams(queryObj);
     return request(`/users/grouped-by-interest?${qs}`);
   },
 
@@ -198,7 +202,7 @@ export const API = {
       limit = limitArg || 10;
     }
 
-    const qs = new URLSearchParams({ page, limit });
+    const qs = new URLSearchParams({ page: String(page), limit: String(limit) });
     return request(`/users?${qs}`);
   },
 
@@ -224,3 +228,6 @@ export const API = {
     return request(`/users/${id}`, { method: "DELETE" });
   },
 };
+
+// Default Export as well to avoid import syntax failures
+export default API;
