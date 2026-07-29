@@ -49,7 +49,7 @@ async function initApp() {
         currentUser = res.data?.user || res.data || currentUser;
         localStorage.setItem("user", JSON.stringify(currentUser));
         updateUIState(true);
-        switchTab("view-notes"); // Set default tab explicitly on reload/app start
+        switchTab("view-notes");
       } else {
         handleLogout();
       }
@@ -100,10 +100,6 @@ function handleLogout() {
   }
 
   currentUser = null;
-
-  // IMPORTANT: Do NOT clear viewNotes.innerHTML = '' here,
-  // as it destroys the static HTML skeleton required for re-rendering after login.
-
   updateUIState(false);
 }
 
@@ -245,12 +241,37 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
+      // 1. Register User
       const res = await API.register(userData);
+
       if (res && res.success) {
-        alert("Registration successful! Please login.");
-        registerForm.reset();
-        registerContainer?.classList.add("hidden");
-        loginContainer?.classList.remove("hidden");
+        // 2. Perform Instant Auto-Login on Registration Success
+        const loginRes = await API.login({
+          email: userData.email,
+          password: userData.password,
+        });
+
+        if (loginRes && loginRes.success) {
+          const profileRes = await API.getProfile();
+          currentUser = profileRes?.data?.user ||
+            profileRes?.data ||
+            loginRes.data?.user || {
+              email: userData.email,
+              role: userData.role,
+            };
+
+          localStorage.setItem("user", JSON.stringify(currentUser));
+
+          updateUIState(true);
+          switchTab("view-notes");
+          registerForm.reset();
+        } else {
+          // Fallback if backend requires manual verification/login step
+          alert("Registration successful! Please log in.");
+          registerForm.reset();
+          registerContainer?.classList.add("hidden");
+          loginContainer?.classList.remove("hidden");
+        }
       } else {
         alert(res?.message || "Registration failed");
       }
