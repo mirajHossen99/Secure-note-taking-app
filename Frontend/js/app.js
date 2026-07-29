@@ -1,5 +1,3 @@
-// app.js
-
 import { API } from "./api.js";
 import { initNotesModule, renderNotes } from "./modules/notes/notes.module.js";
 import { initPostsModule, renderPosts } from "./modules/posts/posts.module.js";
@@ -7,6 +5,10 @@ import {
   initAdminModule,
   renderAdminPanel,
 } from "./modules/admin/admin.module.js";
+import {
+  initProfileModule,
+  renderProfile,
+} from "./modules/profile/profile.module.js";
 
 let currentUser = JSON.parse(localStorage.getItem("user")) || null;
 
@@ -23,6 +25,7 @@ const registerContainer = document.getElementById("register-container");
 const viewNotes = document.getElementById("view-notes");
 const viewPosts = document.getElementById("view-posts");
 const viewAdmin = document.getElementById("view-admin");
+const viewProfile = document.getElementById("view-profile");
 
 const navTabs = document.getElementById("nav-tabs");
 const tabBtnAdmin = document.getElementById("tab-btn-admin");
@@ -37,6 +40,7 @@ async function initApp() {
   if (typeof initNotesModule === "function") initNotesModule();
   if (typeof initPostsModule === "function") initPostsModule();
   if (typeof initAdminModule === "function") initAdminModule();
+  if (typeof initProfileModule === "function") initProfileModule();
 
   // Admin Panel Internal Tab Switching (Users vs Groups)
   setupAdminInternalTabs();
@@ -106,7 +110,7 @@ function handleLogout() {
 }
 
 function switchTab(targetViewId) {
-  const views = [viewNotes, viewPosts, viewAdmin];
+  const views = [viewNotes, viewPosts, viewAdmin, viewProfile];
 
   views.forEach((view) => {
     if (view) {
@@ -135,8 +139,12 @@ function switchTab(targetViewId) {
     targetViewId === "view-posts" &&
     typeof renderPosts === "function"
   ) {
-    // FIX: Passing explicit page 1 and filter "all" instead of undefined
     renderPosts(1, "all", currentUser);
+  } else if (
+    targetViewId === "view-profile" &&
+    typeof renderProfile === "function"
+  ) {
+    renderProfile(currentUser);
   } else if (
     targetViewId === "view-admin" &&
     currentUser?.role === "admin" &&
@@ -305,6 +313,16 @@ document.addEventListener("DOMContentLoaded", () => {
     if (btn) {
       const target = btn.getAttribute("data-target");
       switchTab(target);
+    }
+  });
+
+  // Profile update event trigger handling
+  window.addEventListener("userProfileUpdated", (e) => {
+    if (e.detail) {
+      currentUser = e.detail;
+      if (userNameEl) {
+        userNameEl.innerText = currentUser.name || currentUser.email || "User";
+      }
     }
   });
 

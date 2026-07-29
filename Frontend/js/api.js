@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:5000/api';
+const BASE_URL = "http://localhost:5000/api";
 
 function getHeaders() {
   const token = localStorage.getItem("token");
@@ -28,7 +28,8 @@ async function request(endpoint, options = {}) {
       return {
         success: false,
         status: response.status,
-        message: body.message || body.error || `Request failed (${response.status})`,
+        message:
+          body.message || body.error || `Request failed (${response.status})`,
       };
     }
 
@@ -87,6 +88,22 @@ export const API = {
     return request("/auth/me");
   },
 
+  // ---------------- PROFILE ----------------
+  async updateProfile(profileData) {
+    const res = await request("/auth/me", {
+      method: "PATCH",
+      body: JSON.stringify(profileData),
+    });
+
+    if (res.success && res.data) {
+      const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+      const updatedUser = { ...currentUser, ...res.data };
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+    }
+
+    return res;
+  },
+
   // ---------------- NOTES ----------------
   async createNote(noteData) {
     return request("/notes", {
@@ -100,7 +117,7 @@ export const API = {
     let limit = 10;
     let userId;
 
-    if (typeof pageOrOptions === 'object' && pageOrOptions !== null) {
+    if (typeof pageOrOptions === "object" && pageOrOptions !== null) {
       page = pageOrOptions.page || 1;
       limit = pageOrOptions.limit || 10;
       userId = pageOrOptions.userId;
@@ -136,7 +153,7 @@ export const API = {
     let page = 1;
     let limit = 10;
 
-    if (typeof pageOrOptions === 'object' && pageOrOptions !== null) {
+    if (typeof pageOrOptions === "object" && pageOrOptions !== null) {
       page = pageOrOptions.page || 1;
       limit = pageOrOptions.limit || 10;
     } else {
@@ -144,7 +161,10 @@ export const API = {
       limit = limitArg || 10;
     }
 
-    const qs = new URLSearchParams({ page: String(page), limit: String(limit) });
+    const qs = new URLSearchParams({
+      page: String(page),
+      limit: String(limit),
+    });
     return request(`/posts?${qs}`);
   },
 
@@ -152,7 +172,7 @@ export const API = {
     let page = 1;
     let limit = 10;
 
-    if (typeof pageOrOptions === 'object' && pageOrOptions !== null) {
+    if (typeof pageOrOptions === "object" && pageOrOptions !== null) {
       page = pageOrOptions.page || 1;
       limit = pageOrOptions.limit || 10;
     } else {
@@ -160,7 +180,10 @@ export const API = {
       limit = limitArg || 10;
     }
 
-    const qs = new URLSearchParams({ page: String(page), limit: String(limit) });
+    const qs = new URLSearchParams({
+      page: String(page),
+      limit: String(limit),
+    });
     return request(`/posts/user/${userId}?${qs}`);
   },
 
@@ -192,7 +215,7 @@ export const API = {
     let page = 1;
     let limit = 10;
 
-    if (typeof pageOrOptions === 'object' && pageOrOptions !== null) {
+    if (typeof pageOrOptions === "object" && pageOrOptions !== null) {
       page = pageOrOptions.page || 1;
       limit = pageOrOptions.limit || 10;
     } else {
@@ -200,7 +223,10 @@ export const API = {
       limit = limitArg || 10;
     }
 
-    const qs = new URLSearchParams({ page: String(page), limit: String(limit) });
+    const qs = new URLSearchParams({
+      page: String(page),
+      limit: String(limit),
+    });
     return request(`/users?${qs}`);
   },
 

@@ -1,5 +1,3 @@
-// modules/posts/posts.module.js
-
 import { API } from "../../api.js";
 import { escapeHTML } from "../../utils/dom.js";
 
@@ -82,36 +80,43 @@ function setupEventListeners() {
         const res = await API.deletePost(id);
         if (res && !res.success && res.message) {
           alert(res.message);
+        } else {
+          renderPosts(currentPostsPage, activeFilter, cachedCurrentUser);
         }
-        renderPosts(currentPostsPage, activeFilter, cachedCurrentUser);
       }
     }
   });
 }
 
-// Switch between "All Posts" and "My Posts"
-function switchPostFilter(filterType) {
-  if (activeFilter === filterType) return;
-
-  activeFilter = filterType;
-  currentPostsPage = 1;
-
-  // Update UI styles for filter buttons
+// Update Filter UI classes explicitly based on state
+function updateFilterUIState() {
   if (filterAllBtn && filterMyBtn) {
+    const activeClass = "bg-emerald-600 text-white";
+    const inactiveClass = "bg-slate-800 text-slate-400 hover:text-white";
+
     if (activeFilter === "all") {
-      filterAllBtn.className =
-        "post-filter-btn px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 text-white transition-colors";
-      filterMyBtn.className =
-        "post-filter-btn px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-800 text-slate-400 hover:text-white transition-colors";
+      filterAllBtn.className = `post-filter-btn px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${activeClass}`;
+      filterMyBtn.className = `post-filter-btn px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${inactiveClass}`;
     } else {
-      filterMyBtn.className =
-        "post-filter-btn px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 text-white transition-colors";
-      filterAllBtn.className =
-        "post-filter-btn px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-800 text-slate-400 hover:text-white transition-colors";
+      filterMyBtn.className = `post-filter-btn px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${activeClass}`;
+      filterAllBtn.className = `post-filter-btn px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${inactiveClass}`;
     }
   }
+}
 
+// Switch between "All Posts" and "My Posts"
+function switchPostFilter(filterType) {
+  activeFilter = filterType;
+  currentPostsPage = 1;
+  updateFilterUIState();
   renderPosts(1, activeFilter, cachedCurrentUser);
+}
+
+// Exportable function to reset filter on tab/nav switch
+export function resetPostFilter() {
+  activeFilter = "all";
+  currentPostsPage = 1;
+  updateFilterUIState();
 }
 
 export async function renderPosts(
@@ -129,13 +134,22 @@ export async function renderPosts(
     activeFilter = filter;
   }
 
+  // Sync UI button highlight with actual filter state
+  updateFilterUIState();
+
   if (currentUser) {
     cachedCurrentUser = currentUser;
   }
 
-  // Fallback chaining logic for logged in user object
-  const activeUser =
-    cachedCurrentUser || JSON.parse(localStorage.getItem("user") || "{}");
+  // Get freshest active user state
+  let localUser = {};
+  try {
+    localUser = JSON.parse(localStorage.getItem("user") || "{}");
+  } catch (err) {
+    localUser = {};
+  }
+
+  const activeUser = cachedCurrentUser || localUser;
   const userId = activeUser._id || activeUser.id;
 
   postsList.innerHTML = `<div class="text-center text-slate-400 py-6 text-sm">Loading posts...</div>`;
@@ -160,9 +174,8 @@ export async function renderPosts(
       return;
     }
 
-    // Comprehensive Post Extracting Unwrapper
     let posts = [];
-    const payload = res.data !== undefined ? res.data : res;
+    const payload = res?.data !== undefined ? res.data : res || {};
 
     if (Array.isArray(payload)) {
       posts = payload;
@@ -174,12 +187,18 @@ export async function renderPosts(
       posts = payload.docs;
     }
 
-    const meta = payload.meta || res.meta || {};
+    const meta = payload.meta || res?.meta || {};
     const totalCount = meta.total || payload.total || posts.length;
     totalPostsPages =
       Number(meta.totalPages || payload.totalPages) ||
       Math.ceil(totalCount / POSTS_PER_PAGE) ||
       1;
+
+    // Handle empty page fallback when deleting items on higher pages
+    if ((!posts || posts.length === 0) && currentPostsPage > 1) {
+      currentPostsPage--;
+      return renderPosts(currentPostsPage, activeFilter, activeUser);
+    }
 
     if (!posts || posts.length === 0) {
       const emptyMsg =
@@ -201,7 +220,6 @@ export async function renderPosts(
       .map((post) => {
         const postId = post._id || post.id;
 
-        // Extract author accurately whether string or populated object
         const author =
           typeof post.author === "object" && post.author !== null
             ? post.author
