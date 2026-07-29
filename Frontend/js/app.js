@@ -1,3 +1,5 @@
+// app.js
+
 import { API } from "./api.js";
 import { initNotesModule, renderNotes } from "./modules/notes/notes.module.js";
 import { initPostsModule, renderPosts } from "./modules/posts/posts.module.js";
@@ -133,7 +135,8 @@ function switchTab(targetViewId) {
     targetViewId === "view-posts" &&
     typeof renderPosts === "function"
   ) {
-    renderPosts(undefined, currentUser);
+    // FIX: Passing explicit page 1 and filter "all" instead of undefined
+    renderPosts(1, "all", currentUser);
   } else if (
     targetViewId === "view-admin" &&
     currentUser?.role === "admin" &&
@@ -205,7 +208,7 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.setItem("user", JSON.stringify(currentUser));
         updateUIState(true);
 
-        // Directly switch to the default tab and fetch data
+        // Directly switch to default view
         switchTab("view-notes");
         loginForm.reset();
       } else {
@@ -219,6 +222,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
   registerForm?.addEventListener("submit", async (e) => {
     e.preventDefault();
+
+    // Parse interests from input
+    const rawInterests =
+      (
+        document.getElementById("reg-interests") ||
+        document.getElementById("register-interests")
+      )?.value || "";
+
+    const interestsArray = rawInterests
+      ? rawInterests
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean)
+      : [];
+
     const userData = {
       name: (
         document.getElementById("reg-name") ||
@@ -233,6 +251,7 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("register-password")
       )?.value,
       role: document.getElementById("reg-role")?.value || "user",
+      interests: interestsArray,
     };
 
     if (!userData.email || !userData.password) {
@@ -241,11 +260,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
-      // 1. Register User
       const res = await API.register(userData);
 
       if (res && res.success) {
-        // 2. Perform Instant Auto-Login on Registration Success
         const loginRes = await API.login({
           email: userData.email,
           password: userData.password,
@@ -258,6 +275,7 @@ document.addEventListener("DOMContentLoaded", () => {
             loginRes.data?.user || {
               email: userData.email,
               role: userData.role,
+              interests: interestsArray,
             };
 
           localStorage.setItem("user", JSON.stringify(currentUser));
@@ -266,7 +284,6 @@ document.addEventListener("DOMContentLoaded", () => {
           switchTab("view-notes");
           registerForm.reset();
         } else {
-          // Fallback if backend requires manual verification/login step
           alert("Registration successful! Please log in.");
           registerForm.reset();
           registerContainer?.classList.add("hidden");
