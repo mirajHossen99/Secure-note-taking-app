@@ -272,6 +272,7 @@ frontend/
 │   └── modules/            # Isolated Feature Modules
 │       ├── admin/          # Admin panel & grouped interest management
 │       ├── notes/          # Personal notes CRUD logic
+│       ├── profile/        # Profile logic
 │       └── posts/          # Public feed/posts logic
 └── README.md
 
