@@ -3,7 +3,7 @@ import { escapeHTML } from '../../utils/dom.js';
 
 let currentPage = 1;
 let totalPages = 1;
-const NOTES_PER_PAGE = 10;
+const NOTES_PER_PAGE = 9;
 let editingNoteId = null;
 
 // Elements
